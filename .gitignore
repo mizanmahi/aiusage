@@ -1,0 +1,17 @@
+bin/
+*.exe
+
+# Go
+*/vendor/
+go.work.sum
+
+# UI
+ui/node_modules/
+ui/dist/
+
+# Config (contains API keys)
+**/.aiusage/
+*.toml.local
+
+# DB
+*.db
