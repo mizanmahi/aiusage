@@ -9,9 +9,11 @@ go.work.sum
 ui/node_modules/
 ui/dist/
 
-# Config (contains API keys)
+# Config (contains API keys)mee
 **/.aiusage/
 *.toml.local
 
 # DB
 *.db
+BUILDING.md
+docs/
