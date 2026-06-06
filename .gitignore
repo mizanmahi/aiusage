@@ -15,5 +15,9 @@ ui/dist/
 
 # DB
 *.db
+
+
 BUILDING.md
 docs/
+*.jsonl
+
