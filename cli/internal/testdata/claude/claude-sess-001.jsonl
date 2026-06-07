@@ -1,0 +1,3 @@
+{"type":"summary","summary":"ignored non-assistant line"}
+{"type":"assistant","sessionId":"claude-sess-001","timestamp":"2026-06-01T10:00:00.000Z","message":{"model":"claude-sonnet-4-5","usage":{"input_tokens":5000,"output_tokens":300,"cache_creation_input_tokens":3000,"cache_read_input_tokens":1500}}}
+{"type":"assistant","sessionId":"claude-sess-001","timestamp":"2026-06-01T10:05:00.000Z","message":{"model":"claude-sonnet-4-5","usage":{"input_tokens":2000,"output_tokens":150,"cache_creation_input_tokens":0,"cache_read_input_tokens":1800}}}
