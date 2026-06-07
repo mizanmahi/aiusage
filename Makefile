@@ -28,10 +28,10 @@ test:
 	cd server && go test ./...
 
 migrate:
-	cd server && goose postgres "$$DATABASE_URL" up
+	cd server && goose -dir migrations postgres "$$DATABASE_URL" up
 
 migrate-down:
-	cd server && goose postgres "$$DATABASE_URL" down
+	cd server && goose -dir migrations postgres "$$DATABASE_URL" down
 
 migrate-status:
-	cd server && goose postgres "$$DATABASE_URL" status
+	cd server && goose -dir migrations postgres "$$DATABASE_URL" status

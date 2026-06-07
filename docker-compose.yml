@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: aiusage
       POSTGRES_PASSWORD: aiusage
     ports:
-      - "5432:5432"
+      - "5432:5432" # i already have a postgres running on my machine, so I changed the port to 5433
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
