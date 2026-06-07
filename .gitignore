@@ -20,4 +20,4 @@ ui/dist/
 BUILDING.md
 docs/
 *.jsonl
-
+!cli/internal/testdata/**/*.jsonl
