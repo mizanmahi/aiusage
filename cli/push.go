@@ -8,12 +8,17 @@ import (
 	"github.com/mizanmahi/aiusage/cli/internal/claude"
 	"github.com/mizanmahi/aiusage/cli/internal/codex"
 	"github.com/mizanmahi/aiusage/cli/internal/config"
+	pushclient "github.com/mizanmahi/aiusage/cli/internal/push"
 	"github.com/mizanmahi/aiusage/cli/internal/state"
 	"github.com/mizanmahi/aiusage/types"
 	"github.com/spf13/cobra"
 )
 
 var pushDryRun bool
+var sendUsageEvents = pushclient.Send
+var currentTime = time.Now
+
+const cliVersion = ""
 
 var pushCmd = &cobra.Command{
 	Use:   "push",
@@ -29,10 +34,6 @@ func init() {
 }
 
 func runPush(out, errOut io.Writer, dryRun bool) error {
-	if !dryRun {
-		return fmt.Errorf("push is not implemented yet; use --dry-run to preview pending sessions")
-	}
-
 	cfg, err := config.Load()
 	if err != nil {
 		return fmt.Errorf("config not found; run 'aiusage init' first: %w", err)
@@ -43,8 +44,31 @@ func runPush(out, errOut io.Writer, dryRun bool) error {
 		return err
 	}
 
+	pushStartedAt := currentTime().UTC()
 	events, claudeCount, codexCount := collectPendingEvents(cfg, st.LastPushedAt, errOut)
-	printDryRun(out, cfg.ServerURL, st.LastPushedAt, events, claudeCount, codexCount)
+	if dryRun {
+		printDryRun(out, cfg.ServerURL, st.LastPushedAt, events, claudeCount, codexCount)
+		return nil
+	}
+
+	if len(events) == 0 {
+		fmt.Fprintln(out, "No pending sessions.")
+		return nil
+	}
+
+	result, err := sendUsageEvents(cfg.ServerURL, cfg.APIKey, cliVersion, events)
+	if err != nil {
+		return fmt.Errorf("push failed: %w", err)
+	}
+
+	if err := state.Save(&state.State{LastPushedAt: pushStartedAt}); err != nil {
+		return err
+	}
+
+	fmt.Fprintf(out, "Pushed sessions: %d accepted, %d skipped\n", result.Accepted, result.Skipped)
+	if result.Message != "" {
+		fmt.Fprintln(out, result.Message)
+	}
 	return nil
 }
 
