@@ -7,4 +7,6 @@ require (
 	github.com/mizanmahi/aiusage/types v0.0.0
 )
 
+require github.com/lib/pq v1.12.3
+
 replace github.com/mizanmahi/aiusage/types => ../types

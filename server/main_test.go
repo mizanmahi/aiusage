@@ -10,7 +10,7 @@ import (
 )
 
 func TestRouterHealth(t *testing.T) {
-	router := newRouter(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	router := newRouter(slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	res := httptest.NewRecorder()
