@@ -1,4 +1,4 @@
-.PHONY: build-cli build-server build-ui dev-server run-cli tidy test migrate
+.PHONY: build-cli build-server build-ui dev-server run-cli tidy test migrate migrate-down migrate-status
 
 build-cli:
 	mkdir -p bin
@@ -28,4 +28,10 @@ test:
 	cd server && go test ./...
 
 migrate:
-	psql $$DATABASE_URL -f server/migrations/001_initial.sql
+	cd server && goose postgres "$$DATABASE_URL" up
+
+migrate-down:
+	cd server && goose postgres "$$DATABASE_URL" down
+
+migrate-status:
+	cd server && goose postgres "$$DATABASE_URL" status
