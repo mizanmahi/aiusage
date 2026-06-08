@@ -29,6 +29,9 @@ func TestLoadReadsEnvironment(t *testing.T) {
 
 func TestLoadDefaultsOptionalValues(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://example")
+	t.Setenv("PORT", "")
+	t.Setenv("ENV", "")
+	t.Setenv("MIN_CLI_VERSION", "")
 
 	cfg, err := Load()
 	if err != nil {
@@ -47,6 +50,8 @@ func TestLoadDefaultsOptionalValues(t *testing.T) {
 }
 
 func TestLoadRequiresDatabaseURL(t *testing.T) {
+	t.Setenv("DATABASE_URL", "")
+
 	if _, err := Load(); err == nil {
 		t.Fatal("Load() error = nil, want required database error")
 	}
