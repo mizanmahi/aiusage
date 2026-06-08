@@ -1,24 +1,20 @@
-import type { APIErrorResponse, APIResponse, DailyPoint, ProjectSummary, UserSummary } from './types'
+import type { APIErrorResponse, APIResponse, DailyPoint, ProjectSummary, UserSummary } from '@/types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
-type RequestOptions = {
+export type APIOptions = {
   apiKey: string
 }
 
-export async function getUsers(options: RequestOptions): Promise<UserSummary[]> {
+export async function getUsers(options: APIOptions): Promise<UserSummary[]> {
   return request<UserSummary[]>('/admin/users', options)
 }
 
-export async function getUserProjects(userID: string, options: RequestOptions): Promise<ProjectSummary[]> {
+export async function getUserProjects(userID: string, options: APIOptions): Promise<ProjectSummary[]> {
   return request<ProjectSummary[]>(`/admin/users/${encodeURIComponent(userID)}`, options)
 }
 
-export async function getDailySummary(
-  from: string,
-  to: string,
-  options: RequestOptions,
-): Promise<DailyPoint[]> {
+export async function getDailySummary(from: string, to: string, options: APIOptions): Promise<DailyPoint[]> {
   const params = new URLSearchParams()
   if (from) params.set('from', from)
   if (to) params.set('to', to)
@@ -27,7 +23,7 @@ export async function getDailySummary(
   return request<DailyPoint[]>(`/admin/summary${query ? `?${query}` : ''}`, options)
 }
 
-async function request<T>(path: string, options: RequestOptions): Promise<T> {
+async function request<T>(path: string, options: APIOptions): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${options.apiKey}`,
