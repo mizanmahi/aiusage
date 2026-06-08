@@ -13,4 +13,11 @@ type EventRepository interface {
 
 type UserRepository interface {
 	FindByAPIKeyHash(ctx context.Context, apiKeyHash string) (*domain.User, error)
+	ListWithTotals(ctx context.Context) ([]types.UserSummary, error)
+}
+
+type ProjectRepository interface {
+	ListByUser(ctx context.Context, userID string) ([]types.ProjectSummary, error)
+	ListAll(ctx context.Context) ([]types.ProjectSummary, error)
+	DailySummary(ctx context.Context, from, to string) ([]types.DailyPoint, error)
 }

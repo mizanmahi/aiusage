@@ -40,11 +40,13 @@ func main() {
 
 	events := repository.NewEventRepo(db)
 	users := repository.NewUserRepo(db)
+	projects := repository.NewProjectRepo(db)
 	ingest := handler.NewIngestHandler(service.NewIngestService(events))
+	admin := handler.NewAdminHandler(service.NewAdminService(users, projects))
 
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: newRouter(logger, ingest, users, cfg.MinCLIVersion),
+		Handler: newRouter(logger, ingest, admin, users, cfg.MinCLIVersion),
 	}
 
 	logger.Info("server starting", "addr", server.Addr, "env", cfg.Env)
@@ -57,6 +59,7 @@ func main() {
 func newRouter(
 	logger *slog.Logger,
 	ingest *handler.IngestHandler,
+	admin *handler.AdminHandler,
 	users repository.UserRepository,
 	minCLIVersion string,
 ) http.Handler {
@@ -74,6 +77,14 @@ func newRouter(
 			middleware.Auth(users),
 			minCLIVersionHeader(minCLIVersion),
 		).Post("/ingest", ingest.Create)
+	}
+	if admin != nil && users != nil {
+		router.Route("/admin", func(r chi.Router) {
+			r.Use(middleware.Auth(users))
+			r.Get("/users", admin.Users)
+			r.Get("/users/{id}", admin.UserProjects)
+			r.Get("/summary", admin.Summary)
+		})
 	}
 
 	return router

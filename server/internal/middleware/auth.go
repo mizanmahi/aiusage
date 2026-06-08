@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/mizanmahi/aiusage/server/internal/domain"
-	"github.com/mizanmahi/aiusage/server/internal/repository"
 	"github.com/mizanmahi/aiusage/types"
 )
 
@@ -17,7 +16,11 @@ type contextKey string
 
 const userContextKey contextKey = "user"
 
-func Auth(users repository.UserRepository) func(http.Handler) http.Handler {
+type UserFinder interface {
+	FindByAPIKeyHash(ctx context.Context, apiKeyHash string) (*domain.User, error)
+}
+
+func Auth(users UserFinder) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			apiKey := bearerToken(r.Header.Get("Authorization"))
