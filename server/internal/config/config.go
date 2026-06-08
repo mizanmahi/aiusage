@@ -10,6 +10,8 @@ type Config struct {
 	Port          string
 	Env           string
 	MinCLIVersion string
+	StaticDir     string
+	CORSOrigins   string
 }
 
 func Load() (*Config, error) {
@@ -18,6 +20,8 @@ func Load() (*Config, error) {
 		Port:          getenv("PORT", "8080"),
 		Env:           getenv("ENV", "development"),
 		MinCLIVersion: os.Getenv("MIN_CLI_VERSION"),
+		StaticDir:     getenv("STATIC_DIR", "../ui/dist"),
+		CORSOrigins:   getenv("CORS_ORIGINS", "*"),
 	}
 	if cfg.DatabaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")

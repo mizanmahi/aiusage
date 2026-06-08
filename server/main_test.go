@@ -7,10 +7,19 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/mizanmahi/aiusage/server/internal/config"
 )
 
 func TestRouterHealth(t *testing.T) {
-	router := newRouter(slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil, nil, "")
+	router := newRouter(
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		nil,
+		nil,
+		nil,
+		nil,
+		testConfig(),
+	)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	res := httptest.NewRecorder()
@@ -21,5 +30,13 @@ func TestRouterHealth(t *testing.T) {
 	}
 	if strings.TrimSpace(res.Body.String()) != "ok" {
 		t.Fatalf("body = %q, want ok", res.Body.String())
+	}
+}
+
+func testConfig() *config.Config {
+	return &config.Config{
+		Port:        "8080",
+		Env:         "development",
+		CORSOrigins: "*",
 	}
 }
