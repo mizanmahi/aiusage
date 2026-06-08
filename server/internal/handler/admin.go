@@ -2,9 +2,11 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mizanmahi/aiusage/server/internal/apperror"
 	"github.com/mizanmahi/aiusage/server/internal/domain"
 	"github.com/mizanmahi/aiusage/server/internal/middleware"
 	"github.com/mizanmahi/aiusage/types"
@@ -12,6 +14,7 @@ import (
 
 type AdminService interface {
 	Users(ctx context.Context, actor *domain.User) ([]types.UserSummary, error)
+	CreateUser(ctx context.Context, actor *domain.User, request types.CreateUserRequest) (*types.CreateUserResponse, error)
 	UserProjects(ctx context.Context, actor *domain.User, userID string) ([]types.ProjectSummary, error)
 	Summary(ctx context.Context, actor *domain.User, from, to string) ([]types.DailyPoint, error)
 }
@@ -32,6 +35,22 @@ func (h *AdminHandler) Users(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, types.APIResponse[[]types.UserSummary]{Data: users})
+}
+
+func (h *AdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	var request types.CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		writeError(w, apperror.BadRequest("invalid JSON payload"))
+		return
+	}
+
+	response, err := h.service.CreateUser(r.Context(), middleware.User(r), request)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, types.APIResponse[*types.CreateUserResponse]{Data: response})
 }
 
 func (h *AdminHandler) UserProjects(w http.ResponseWriter, r *http.Request) {

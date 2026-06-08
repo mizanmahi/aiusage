@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
-import { getDailySummary, getUserProjects, getUsers } from '@/lib/api'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createUser, getDailySummary, getUserProjects, getUsers } from '@/lib/api'
+import type { CreateUserInput } from '@/types'
 
 type QueryOptions = {
   apiKey: string
@@ -11,6 +12,15 @@ export function useUsersQuery(options: QueryOptions) {
     queryKey: ['admin', 'users'],
     queryFn: () => getUsers({ apiKey: options.apiKey }),
     enabled: options.enabled,
+  })
+}
+
+export function useCreateUserMutation(options: Pick<QueryOptions, 'apiKey'>) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: CreateUserInput) => createUser(input, { apiKey: options.apiKey }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
   })
 }
 

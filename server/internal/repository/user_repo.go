@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
+	"github.com/lib/pq"
 	"github.com/mizanmahi/aiusage/server/internal/domain"
 	"github.com/mizanmahi/aiusage/types"
 )
@@ -37,12 +39,13 @@ func (r *UserRepo) ListWithTotals(ctx context.Context) ([]types.UserSummary, err
 			u.id::text,
 			u.email,
 			u.name,
+			u.is_admin,
 			COALESCE(SUM(e.input_tokens + e.output_tokens + e.cache_tokens + e.reasoning_tokens), 0)::bigint,
 			COALESCE(SUM(e.cost_usd), 0)::float8,
 			COALESCE(to_char(MAX(e.date), 'YYYY-MM-DD'), '')
 		FROM users u
 		LEFT JOIN usage_events e ON e.user_id = u.id
-		GROUP BY u.id, u.email, u.name
+		GROUP BY u.id, u.email, u.name, u.is_admin
 		ORDER BY
 			COALESCE(SUM(e.input_tokens + e.output_tokens + e.cache_tokens + e.reasoning_tokens), 0) DESC,
 			u.email ASC
@@ -59,6 +62,7 @@ func (r *UserRepo) ListWithTotals(ctx context.Context) ([]types.UserSummary, err
 			&user.ID,
 			&user.Email,
 			&user.Name,
+			&user.IsAdmin,
 			&user.TotalTokens,
 			&user.TotalCost,
 			&user.LastActive,
@@ -72,4 +76,23 @@ func (r *UserRepo) ListWithTotals(ctx context.Context) ([]types.UserSummary, err
 	}
 
 	return users, nil
+}
+
+func (r *UserRepo) Create(ctx context.Context, user domain.User) (*types.UserSummary, error) {
+	row := r.db.QueryRowContext(ctx, `
+		INSERT INTO users (email, name, api_key_hash, is_admin)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id::text, email, name, is_admin
+	`, user.Email, user.Name, user.APIKeyHash, user.IsAdmin)
+
+	var created types.UserSummary
+	if err := row.Scan(&created.ID, &created.Email, &created.Name, &created.IsAdmin); err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return nil, ErrUserExists
+		}
+		return nil, err
+	}
+
+	return &created, nil
 }

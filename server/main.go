@@ -88,6 +88,7 @@ func newRouter(
 		router.Route("/admin", func(r chi.Router) {
 			r.Use(middleware.Auth(users))
 			r.Get("/users", admin.Users)
+			r.Post("/users", admin.CreateUser)
 			r.Get("/users/{id}", admin.UserProjects)
 			r.Get("/summary", admin.Summary)
 		})

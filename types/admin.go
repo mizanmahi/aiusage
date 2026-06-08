@@ -4,9 +4,21 @@ type UserSummary struct {
 	ID          string  `json:"id"`
 	Email       string  `json:"email"`
 	Name        string  `json:"name"`
+	IsAdmin     bool    `json:"is_admin"`
 	TotalTokens int64   `json:"total_tokens"`
 	TotalCost   float64 `json:"total_cost_usd"`
 	LastActive  string  `json:"last_active"`
+}
+
+type CreateUserRequest struct {
+	Email   string `json:"email"`
+	Name    string `json:"name"`
+	IsAdmin bool   `json:"is_admin"`
+}
+
+type CreateUserResponse struct {
+	User   UserSummary `json:"user"`
+	APIKey string      `json:"api_key"`
 }
 
 type ProjectSummary struct {

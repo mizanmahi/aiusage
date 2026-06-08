@@ -13,9 +13,21 @@ export type UserSummary = {
   id: string
   email: string
   name: string
+  is_admin: boolean
   total_tokens: number
   total_cost_usd: number
   last_active: string
+}
+
+export type CreateUserInput = {
+  email: string
+  name: string
+  is_admin: boolean
+}
+
+export type CreateUserResult = {
+  user: UserSummary
+  api_key: string
 }
 
 export type ProjectSummary = {

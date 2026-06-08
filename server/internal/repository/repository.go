@@ -2,10 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/mizanmahi/aiusage/server/internal/domain"
 	"github.com/mizanmahi/aiusage/types"
 )
+
+var ErrUserExists = errors.New("user already exists")
 
 type EventRepository interface {
 	Upsert(ctx context.Context, userID string, events []types.UsageEvent) (accepted, skipped int, err error)
@@ -14,6 +17,7 @@ type EventRepository interface {
 type UserRepository interface {
 	FindByAPIKeyHash(ctx context.Context, apiKeyHash string) (*domain.User, error)
 	ListWithTotals(ctx context.Context) ([]types.UserSummary, error)
+	Create(ctx context.Context, user domain.User) (*types.UserSummary, error)
 }
 
 type ProjectRepository interface {

@@ -10,7 +10,8 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { formatCost, formatDate, formatTokens } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { ProjectSummary, UserSummary } from '@/types'
-import { useDailySummaryQuery, useProjectsQuery, useUsersQuery } from './queries'
+import { CreateUserPanel } from './create-user-panel'
+import { useCreateUserMutation, useDailySummaryQuery, useProjectsQuery, useUsersQuery } from './queries'
 
 const storedAPIKey = 'aiusage.admin.apiKey'
 const emptyUsers: UserSummary[] = []
@@ -30,6 +31,7 @@ export function AdminDashboard() {
   const selectedUser = users.find((user) => user.id === selectedUserID) ?? users[0]
   const projectsQuery = useProjectsQuery(selectedUser?.id ?? '', { apiKey: activeKey, enabled: hasKey })
   const dailyQuery = useDailySummaryQuery(from, to, { apiKey: activeKey, enabled: hasKey })
+  const createUser = useCreateUserMutation({ apiKey: activeKey })
 
   const projects = projectsQuery.data ?? emptyProjects
   const daily = dailyQuery.data ?? emptyDaily
@@ -40,8 +42,10 @@ export function AdminDashboard() {
 
   function submitKey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    sessionStorage.setItem(storedAPIKey, apiKey)
-    setActiveKey(apiKey)
+    const nextKey = apiKey.trim()
+    sessionStorage.setItem(storedAPIKey, nextKey)
+    setAPIKey(nextKey)
+    setActiveKey(nextKey)
   }
 
   return (
@@ -65,9 +69,9 @@ export function AdminDashboard() {
                   autoComplete="current-password"
                 />
               </label>
-              <Button type="submit" disabled={!apiKey || isFetching}>
+              <Button type="submit" disabled={!apiKey.trim() || isFetching}>
                 <KeyRound className="size-4" />
-                Refresh
+                Load
               </Button>
             </form>
           </div>
@@ -81,23 +85,31 @@ export function AdminDashboard() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <Card>
-            <CardHeader>
-              <CardTitle>Users</CardTitle>
-              <Badge>{message}</Badge>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {users.map((user) => (
-                <UserRow
-                  key={user.id}
-                  user={user}
-                  active={user.id === selectedUser?.id}
-                  onSelect={() => setSelectedUserID(user.id)}
-                />
-              ))}
-              {!users.length && <EmptyState label={hasKey ? 'No users found' : 'Enter an admin API key'} />}
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <CreateUserPanel
+              enabled={hasKey}
+              isCreating={createUser.isPending}
+              error={createUser.error instanceof Error ? createUser.error : null}
+              onCreate={(input) => createUser.mutateAsync(input)}
+            />
+            <Card>
+              <CardHeader>
+                <CardTitle>Users</CardTitle>
+                <Badge>{message}</Badge>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {users.map((user) => (
+                  <UserRow
+                    key={user.id}
+                    user={user}
+                    active={user.id === selectedUser?.id}
+                    onSelect={() => setSelectedUserID(user.id)}
+                  />
+                ))}
+                {!users.length && <EmptyState label={hasKey ? 'No users found' : 'Enter an admin API key'} />}
+              </CardContent>
+            </Card>
+          </div>
 
           <Card>
             <CardHeader>

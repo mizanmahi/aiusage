@@ -2,6 +2,11 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"strings"
 
 	"github.com/mizanmahi/aiusage/server/internal/apperror"
 	"github.com/mizanmahi/aiusage/server/internal/domain"
@@ -28,6 +33,41 @@ func (s *AdminService) Users(ctx context.Context, actor *domain.User) ([]types.U
 		return nil, apperror.Internal("failed to list users", err)
 	}
 	return users, nil
+}
+
+func (s *AdminService) CreateUser(ctx context.Context, actor *domain.User, request types.CreateUserRequest) (*types.CreateUserResponse, error) {
+	if err := requireAdmin(actor); err != nil {
+		return nil, err
+	}
+
+	email := strings.TrimSpace(request.Email)
+	name := strings.TrimSpace(request.Name)
+	if email == "" {
+		return nil, apperror.BadRequest("email is required")
+	}
+	if name == "" {
+		return nil, apperror.BadRequest("name is required")
+	}
+
+	apiKey, err := generateAPIKey()
+	if err != nil {
+		return nil, apperror.Internal("failed to generate API key", err)
+	}
+
+	user, err := s.users.Create(ctx, domain.User{
+		Email:      email,
+		Name:       name,
+		APIKeyHash: hashAPIKey(apiKey),
+		IsAdmin:    request.IsAdmin,
+	})
+	if err != nil {
+		if errors.Is(err, repository.ErrUserExists) {
+			return nil, apperror.BadRequest("user email already exists")
+		}
+		return nil, apperror.Internal("failed to create user", err)
+	}
+
+	return &types.CreateUserResponse{User: *user, APIKey: apiKey}, nil
 }
 
 func (s *AdminService) UserProjects(ctx context.Context, actor *domain.User, userID string) ([]types.ProjectSummary, error) {
@@ -71,4 +111,17 @@ func requireAdmin(actor *domain.User) error {
 		return apperror.Forbidden("admin access required")
 	}
 	return nil
+}
+
+func generateAPIKey() (string, error) {
+	var token [24]byte
+	if _, err := rand.Read(token[:]); err != nil {
+		return "", err
+	}
+	return "ak_" + hex.EncodeToString(token[:]), nil
+}
+
+func hashAPIKey(apiKey string) string {
+	sum := sha256.Sum256([]byte(apiKey))
+	return hex.EncodeToString(sum[:])
 }
