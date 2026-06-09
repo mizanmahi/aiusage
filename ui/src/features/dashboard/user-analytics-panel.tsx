@@ -26,13 +26,14 @@ const emptyStats: UsageSummaryStats = {
 export function UserAnalyticsPanel({ user, apiKey, enabled, authVersion }: { user?: UserSummary; apiKey: string; enabled: boolean; authVersion: number }) {
   const [tab, setTab] = useState<'breakdown' | 'summary'>('breakdown')
   const [groupBy, setGroupBy] = useState<BreakdownGroup>('day')
+  const [breakdownProvider, setBreakdownProvider] = useState<ProviderFilter>('all')
   const [provider, setProvider] = useState<ProviderFilter>('all')
   const [from, setFrom] = useState('2026-01-01')
   const [to, setTo] = useState('2026-12-31')
   const [sort, setSort] = useState<SortState>({ key: 'group', direction: 'asc' })
 
   const userID = user?.id ?? ''
-  const breakdownQuery = useUserBreakdownQuery(userID, { groupBy, from, to }, { apiKey, enabled, authVersion })
+  const breakdownQuery = useUserBreakdownQuery(userID, { groupBy, provider: breakdownProvider, from, to }, { apiKey, enabled, authVersion })
   const summaryQuery = useUserUsageSummaryQuery(userID, { provider, from, to }, { apiKey, enabled, authVersion })
   const rows = useMemo(() => sortRows(breakdownQuery.data ?? emptyBreakdown, sort), [breakdownQuery.data, sort])
   const stats = summaryQuery.data ?? emptyStats
@@ -62,6 +63,8 @@ export function UserAnalyticsPanel({ user, apiKey, enabled, authVersion }: { use
           <BreakdownTab
             groupBy={groupBy}
             setGroupBy={setGroupBy}
+            provider={breakdownProvider}
+            setProvider={setBreakdownProvider}
             from={from}
             setFrom={setFrom}
             to={to}
@@ -83,6 +86,8 @@ export function UserAnalyticsPanel({ user, apiKey, enabled, authVersion }: { use
 function BreakdownTab({
   groupBy,
   setGroupBy,
+  provider,
+  setProvider,
   from,
   setFrom,
   to,
@@ -95,6 +100,8 @@ function BreakdownTab({
 }: {
   groupBy: BreakdownGroup
   setGroupBy: (value: BreakdownGroup) => void
+  provider: ProviderFilter
+  setProvider: (value: ProviderFilter) => void
   from: string
   setFrom: (value: string) => void
   to: string
@@ -111,11 +118,16 @@ function BreakdownTab({
     <div className="space-y-3">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <Badge>{isLoading ? 'Loading' : `${rows.length} rows`}</Badge>
-        <div className="grid gap-2 sm:grid-cols-[140px_1fr_1fr]">
+        <div className="grid gap-2 sm:grid-cols-[120px_120px_1fr_1fr]">
           <select className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground" value={groupBy} onChange={(event) => setGroupBy(event.target.value as BreakdownGroup)}>
             <option value="day">Days</option>
             <option value="month">Months</option>
             <option value="project">Projects</option>
+          </select>
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground" value={provider} onChange={(event) => setProvider(event.target.value as ProviderFilter)}>
+            <option value="all">All</option>
+            <option value="codex">Codex</option>
+            <option value="claude">Claude</option>
           </select>
           <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
           <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
@@ -233,6 +245,11 @@ function EmptyPanel() {
 function sortRows(rows: UsageBreakdownRow[], sort: SortState) {
   return [...rows].sort((left, right) => {
     const direction = sort.direction === 'asc' ? 1 : -1
+    if (sort.key === 'group') {
+      const groupCompare = compareValue(left.group, right.group)
+      if (groupCompare !== 0) return groupCompare * direction
+      return agentRank(left.agent) - agentRank(right.agent)
+    }
     return compareValue(sortValue(left, sort.key), sortValue(right, sort.key)) * direction
   })
 }
@@ -245,6 +262,13 @@ function sortValue(row: UsageBreakdownRow, key: SortKey) {
 function compareValue(left: string | number, right: string | number) {
   if (typeof left === 'number' && typeof right === 'number') return left - right
   return String(left).localeCompare(String(right))
+}
+
+function agentRank(agent: string) {
+  if (agent === 'all') return 0
+  if (agent === 'codex') return 1
+  if (agent === 'claude') return 2
+  return 3
 }
 
 function lastNDays(value: string) {

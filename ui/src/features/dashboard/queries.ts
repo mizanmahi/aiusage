@@ -41,9 +41,9 @@ export function useDailySummaryQuery(from: string, to: string, options: QueryOpt
   })
 }
 
-export function useUserBreakdownQuery(userID: string, filters: { groupBy: BreakdownGroup; from: string; to: string }, options: QueryOptions) {
+export function useUserBreakdownQuery(userID: string, filters: { groupBy: BreakdownGroup; provider: ProviderFilter; from: string; to: string }, options: QueryOptions) {
   return useQuery({
-    queryKey: ['admin', 'users', userID, 'breakdown', filters.groupBy, filters.from, filters.to, options.authVersion],
+    queryKey: ['admin', 'users', userID, 'breakdown', filters.groupBy, filters.provider, filters.from, filters.to, options.authVersion],
     queryFn: () => getUserBreakdown(userID, filters, { apiKey: options.apiKey }),
     enabled: options.enabled && Boolean(userID),
   })

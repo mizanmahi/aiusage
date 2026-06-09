@@ -98,7 +98,7 @@ func (s *AdminService) Summary(ctx context.Context, actor *domain.User, from, to
 	return points, nil
 }
 
-func (s *AdminService) UserBreakdown(ctx context.Context, actor *domain.User, userID, groupBy, from, to string) ([]types.UsageBreakdownRow, error) {
+func (s *AdminService) UserBreakdown(ctx context.Context, actor *domain.User, userID, groupBy, provider, from, to string) ([]types.UsageBreakdownRow, error) {
 	if err := requireAdmin(actor); err != nil {
 		return nil, err
 	}
@@ -112,9 +112,16 @@ func (s *AdminService) UserBreakdown(ctx context.Context, actor *domain.User, us
 	if groupBy != "day" && groupBy != "month" && groupBy != "project" {
 		return nil, apperror.BadRequest("group_by must be day, month, or project")
 	}
+	provider = strings.TrimSpace(provider)
+	if provider == "" {
+		provider = "all"
+	}
+	if provider != "all" && provider != "codex" && provider != "claude" {
+		return nil, apperror.BadRequest("provider must be all, codex, or claude")
+	}
 	from, to = defaultDateRange(from, to)
 
-	rows, err := s.projects.UserBreakdown(ctx, userID, groupBy, from, to)
+	rows, err := s.projects.UserBreakdown(ctx, userID, groupBy, provider, from, to)
 	if err != nil {
 		return nil, apperror.Internal("failed to load user breakdown", err)
 	}

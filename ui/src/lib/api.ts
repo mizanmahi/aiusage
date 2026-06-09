@@ -44,10 +44,10 @@ export async function getDailySummary(from: string, to: string, options: APIOpti
 
 export async function getUserBreakdown(
   userID: string,
-  filters: { groupBy: BreakdownGroup; from: string; to: string },
+  filters: { groupBy: BreakdownGroup; provider: ProviderFilter; from: string; to: string },
   options: APIOptions,
 ): Promise<UsageBreakdownRow[]> {
-  const params = new URLSearchParams({ group_by: filters.groupBy })
+  const params = new URLSearchParams({ group_by: filters.groupBy, provider: filters.provider })
   if (filters.from) params.set('from', filters.from)
   if (filters.to) params.set('to', filters.to)
 

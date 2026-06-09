@@ -16,7 +16,7 @@ type AdminService interface {
 	Users(ctx context.Context, actor *domain.User) ([]types.UserSummary, error)
 	CreateUser(ctx context.Context, actor *domain.User, request types.CreateUserRequest) (*types.CreateUserResponse, error)
 	UserProjects(ctx context.Context, actor *domain.User, userID string) ([]types.ProjectSummary, error)
-	UserBreakdown(ctx context.Context, actor *domain.User, userID, groupBy, from, to string) ([]types.UsageBreakdownRow, error)
+	UserBreakdown(ctx context.Context, actor *domain.User, userID, groupBy, provider, from, to string) ([]types.UsageBreakdownRow, error)
 	UserUsageSummary(ctx context.Context, actor *domain.User, userID, provider, from, to string) (*types.UsageSummaryStats, error)
 	Summary(ctx context.Context, actor *domain.User, from, to string) ([]types.DailyPoint, error)
 }
@@ -71,6 +71,7 @@ func (h *AdminHandler) UserBreakdown(w http.ResponseWriter, r *http.Request) {
 		middleware.User(r),
 		chi.URLParam(r, "id"),
 		r.URL.Query().Get("group_by"),
+		r.URL.Query().Get("provider"),
 		r.URL.Query().Get("from"),
 		r.URL.Query().Get("to"),
 	)

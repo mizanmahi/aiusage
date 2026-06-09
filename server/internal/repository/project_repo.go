@@ -77,10 +77,16 @@ func (r *ProjectRepo) DailySummary(ctx context.Context, from, to string) ([]type
 	return points, nil
 }
 
-func (r *ProjectRepo) UserBreakdown(ctx context.Context, userID, groupBy, from, to string) ([]types.UsageBreakdownRow, error) {
+func (r *ProjectRepo) UserBreakdown(ctx context.Context, userID, groupBy, provider, from, to string) ([]types.UsageBreakdownRow, error) {
 	groupExpr, err := breakdownGroupExpr(groupBy)
 	if err != nil {
 		return nil, err
+	}
+	providerFilter := ""
+	args := []any{userID, from, to}
+	if provider != "all" {
+		providerFilter = " AND tool = $4"
+		args = append(args, provider)
 	}
 
 	query := fmt.Sprintf(`
@@ -99,7 +105,7 @@ func (r *ProjectRepo) UserBreakdown(ctx context.Context, userID, groupBy, from, 
 				SUM(cost_usd)::float8,
 				MAX(date)::text
 			FROM usage_events
-			WHERE user_id = $1 AND date >= $2::date AND date <= $3::date
+			WHERE user_id = $1 AND date >= $2::date AND date <= $3::date%s
 			GROUP BY usage_group
 			UNION ALL
 			SELECT
@@ -115,13 +121,13 @@ func (r *ProjectRepo) UserBreakdown(ctx context.Context, userID, groupBy, from, 
 				SUM(cost_usd)::float8,
 				MAX(date)::text
 			FROM usage_events
-			WHERE user_id = $1 AND date >= $2::date AND date <= $3::date
+			WHERE user_id = $1 AND date >= $2::date AND date <= $3::date%s
 			GROUP BY usage_group, tool
 		) rows
 		ORDER BY usage_group ASC, CASE WHEN agent = 'all' THEN 0 ELSE 1 END, agent ASC
-	`, groupExpr, groupExpr)
+	`, groupExpr, providerFilter, groupExpr, providerFilter)
 
-	rows, err := r.db.QueryContext(ctx, query, userID, from, to)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

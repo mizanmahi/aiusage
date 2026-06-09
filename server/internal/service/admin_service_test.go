@@ -31,14 +31,15 @@ func (r *fakeAdminUserRepo) Create(ctx context.Context, user domain.User) (*type
 }
 
 type fakeAdminProjectRepo struct {
-	breakdownUserID string
-	breakdownGroup  string
-	breakdownFrom   string
-	breakdownTo     string
-	summaryUserID   string
-	summaryProvider string
-	summaryFrom     string
-	summaryTo       string
+	breakdownUserID   string
+	breakdownGroup    string
+	breakdownProvider string
+	breakdownFrom     string
+	breakdownTo       string
+	summaryUserID     string
+	summaryProvider   string
+	summaryFrom       string
+	summaryTo         string
 }
 
 func (r fakeAdminProjectRepo) ListByUser(ctx context.Context, userID string) ([]types.ProjectSummary, error) {
@@ -53,9 +54,10 @@ func (r fakeAdminProjectRepo) DailySummary(ctx context.Context, from, to string)
 	return nil, nil
 }
 
-func (r *fakeAdminProjectRepo) UserBreakdown(ctx context.Context, userID, groupBy, from, to string) ([]types.UsageBreakdownRow, error) {
+func (r *fakeAdminProjectRepo) UserBreakdown(ctx context.Context, userID, groupBy, provider, from, to string) ([]types.UsageBreakdownRow, error) {
 	r.breakdownUserID = userID
 	r.breakdownGroup = groupBy
+	r.breakdownProvider = provider
 	r.breakdownFrom = from
 	r.breakdownTo = to
 	return []types.UsageBreakdownRow{{Group: "2026-06-09", Agent: "all"}}, nil
@@ -111,15 +113,15 @@ func TestUserBreakdownDefaultsToDayAndWideDateRange(t *testing.T) {
 	projects := &fakeAdminProjectRepo{}
 	service := NewAdminService(&fakeAdminUserRepo{}, projects)
 
-	rows, err := service.UserBreakdown(context.Background(), &domain.User{ID: "admin-1", IsAdmin: true}, "user-1", "", "", "")
+	rows, err := service.UserBreakdown(context.Background(), &domain.User{ID: "admin-1", IsAdmin: true}, "user-1", "", "", "", "")
 	if err != nil {
 		t.Fatalf("UserBreakdown() error = %v", err)
 	}
 	if len(rows) != 1 {
 		t.Fatalf("rows len = %d, want 1", len(rows))
 	}
-	if projects.breakdownUserID != "user-1" || projects.breakdownGroup != "day" {
-		t.Fatalf("breakdown args user=%q group=%q, want user-1/day", projects.breakdownUserID, projects.breakdownGroup)
+	if projects.breakdownUserID != "user-1" || projects.breakdownGroup != "day" || projects.breakdownProvider != "all" {
+		t.Fatalf("breakdown args user=%q group=%q provider=%q, want user-1/day/all", projects.breakdownUserID, projects.breakdownGroup, projects.breakdownProvider)
 	}
 	if projects.breakdownFrom != "2000-01-01" || projects.breakdownTo != "2099-12-31" {
 		t.Fatalf("date range = %s..%s, want defaults", projects.breakdownFrom, projects.breakdownTo)
@@ -129,8 +131,16 @@ func TestUserBreakdownDefaultsToDayAndWideDateRange(t *testing.T) {
 func TestUserBreakdownRejectsInvalidGroup(t *testing.T) {
 	service := NewAdminService(&fakeAdminUserRepo{}, &fakeAdminProjectRepo{})
 
-	if _, err := service.UserBreakdown(context.Background(), &domain.User{ID: "admin-1", IsAdmin: true}, "user-1", "week", "", ""); err == nil {
+	if _, err := service.UserBreakdown(context.Background(), &domain.User{ID: "admin-1", IsAdmin: true}, "user-1", "week", "", "", ""); err == nil {
 		t.Fatal("UserBreakdown() error = nil, want invalid group error")
+	}
+}
+
+func TestUserBreakdownRejectsInvalidProvider(t *testing.T) {
+	service := NewAdminService(&fakeAdminUserRepo{}, &fakeAdminProjectRepo{})
+
+	if _, err := service.UserBreakdown(context.Background(), &domain.User{ID: "admin-1", IsAdmin: true}, "user-1", "day", "openai", "", ""); err == nil {
+		t.Fatal("UserBreakdown() error = nil, want invalid provider error")
 	}
 }
 
