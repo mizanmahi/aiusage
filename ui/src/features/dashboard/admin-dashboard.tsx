@@ -9,36 +9,29 @@ import { Input } from '@/components/ui/input'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { formatCost, formatDate, formatTokens } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { ProjectSummary, UserSummary } from '@/types'
+import type { UserSummary } from '@/types'
 import { CreateUserPanel } from './create-user-panel'
-import { useCreateUserMutation, useDailySummaryQuery, useProjectsQuery, useUsersQuery } from './queries'
+import { useCreateUserMutation, useUsersQuery } from './queries'
+import { UserAnalyticsPanel } from './user-analytics-panel'
 
 const storedAPIKey = 'aiusage.admin.apiKey'
 const emptyUsers: UserSummary[] = []
-const emptyProjects: ProjectSummary[] = []
-const emptyDaily: Array<{ date: string; total_tokens: number }> = []
 
 export function AdminDashboard() {
   const [apiKey, setAPIKey] = useState(() => sessionStorage.getItem(storedAPIKey) ?? '')
   const [activeKey, setActiveKey] = useState(apiKey)
+  const [authVersion, setAuthVersion] = useState(0)
   const [selectedUserID, setSelectedUserID] = useState('')
-  const [from, setFrom] = useState('2026-01-01')
-  const [to, setTo] = useState('2026-12-31')
 
   const hasKey = Boolean(activeKey)
-  const usersQuery = useUsersQuery({ apiKey: activeKey, enabled: hasKey })
+  const usersQuery = useUsersQuery({ apiKey: activeKey, enabled: hasKey, authVersion })
   const users = usersQuery.data ?? emptyUsers
   const selectedUser = users.find((user) => user.id === selectedUserID) ?? users[0]
-  const projectsQuery = useProjectsQuery(selectedUser?.id ?? '', { apiKey: activeKey, enabled: hasKey })
-  const dailyQuery = useDailySummaryQuery(from, to, { apiKey: activeKey, enabled: hasKey })
   const createUser = useCreateUserMutation({ apiKey: activeKey })
 
-  const projects = projectsQuery.data ?? emptyProjects
-  const daily = dailyQuery.data ?? emptyDaily
   const totals = useMemo(() => summarize(users), [users])
-  const queryError = usersQuery.error ?? projectsQuery.error ?? dailyQuery.error
-  const message = statusMessage(hasKey, queryError instanceof Error ? queryError : null)
-  const isFetching = usersQuery.isFetching || projectsQuery.isFetching || dailyQuery.isFetching
+  const message = statusMessage(hasKey, usersQuery.error instanceof Error ? usersQuery.error : null)
+  const isFetching = usersQuery.isFetching
 
   function submitKey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -46,6 +39,7 @@ export function AdminDashboard() {
     sessionStorage.setItem(storedAPIKey, nextKey)
     setAPIKey(nextKey)
     setActiveKey(nextKey)
+    setAuthVersion((version) => version + 1)
   }
 
   return (
@@ -111,32 +105,8 @@ export function AdminDashboard() {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{selectedUser ? selectedUser.name || selectedUser.email : 'Projects'}</CardTitle>
-              <Badge>{projects.length} projects</Badge>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              <ProjectList projects={projects} />
-            </CardContent>
-          </Card>
+          <UserAnalyticsPanel user={selectedUser} apiKey={activeKey} enabled={hasKey} authVersion={authVersion} />
         </section>
-
-        <Card>
-          <CardHeader className="flex-col items-stretch gap-3 py-3 md:flex-row md:items-center">
-            <CardTitle>Daily Summary</CardTitle>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
-              <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
-              <Button type="button" variant="outline" onClick={() => void dailyQuery.refetch()} disabled={!hasKey || isFetching}>
-                Apply
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <DailyBars points={daily} />
-          </CardContent>
-        </Card>
       </div>
     </main>
   )
@@ -170,57 +140,6 @@ function UserRow({ user, active, onSelect }: { user: UserSummary; active: boolea
       </span>
       <strong className="text-xs text-foreground">{formatTokens(user.total_tokens)}</strong>
     </button>
-  )
-}
-
-function ProjectList({ projects }: { projects: ProjectSummary[] }) {
-  const maxTokens = Math.max(1, ...projects.map((project) => project.total_tokens))
-
-  if (!projects.length) {
-    return <EmptyState label="No project usage loaded" />
-  }
-
-  return projects.map((project) => (
-    <div
-      className="grid min-h-16 grid-cols-1 gap-3 border-b border-border py-3 last:border-b-0 md:grid-cols-[minmax(150px,1.3fr)_minmax(120px,1fr)_90px]"
-      key={`${project.user_id}-${project.tool}-${project.project}`}
-    >
-      <div className="min-w-0">
-        <strong className="block truncate text-sm text-foreground">{project.project}</strong>
-        <span className="text-xs text-muted-foreground">
-          {project.tool} · {formatDate(project.last_active)}
-        </span>
-      </div>
-      <div className="h-2 self-center overflow-hidden rounded-full bg-muted">
-        <div className="h-full rounded-full bg-primary" style={{ width: `${(project.total_tokens / maxTokens) * 100}%` }} />
-      </div>
-      <div className="text-left md:text-right">
-        <strong className="block text-sm text-foreground">{formatTokens(project.total_tokens)}</strong>
-        <span className="text-xs text-muted-foreground">{formatCost(project.total_cost_usd)}</span>
-      </div>
-    </div>
-  ))
-}
-
-function DailyBars({ points }: { points: Array<{ date: string; total_tokens: number }> }) {
-  const maxTokens = Math.max(1, ...points.map((point) => point.total_tokens))
-
-  if (!points.length) {
-    return <EmptyState label="No daily data loaded" />
-  }
-
-  return (
-    <div className="space-y-2">
-      {points.map((point) => (
-        <div className="grid items-center gap-3 md:grid-cols-[104px_minmax(120px,1fr)_78px]" key={point.date}>
-          <span className="text-xs text-muted-foreground">{point.date}</span>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${(point.total_tokens / maxTokens) * 100}%` }} />
-          </div>
-          <strong className="text-xs text-foreground md:text-right">{formatTokens(point.total_tokens)}</strong>
-        </div>
-      ))}
-    </div>
   )
 }
 

@@ -1,4 +1,16 @@
-import type { APIErrorResponse, APIResponse, CreateUserInput, CreateUserResult, DailyPoint, ProjectSummary, UserSummary } from '@/types'
+import type {
+  APIErrorResponse,
+  APIResponse,
+  BreakdownGroup,
+  CreateUserInput,
+  CreateUserResult,
+  DailyPoint,
+  ProjectSummary,
+  ProviderFilter,
+  UsageBreakdownRow,
+  UsageSummaryStats,
+  UserSummary,
+} from '@/types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -28,6 +40,30 @@ export async function getDailySummary(from: string, to: string, options: APIOpti
 
   const query = params.toString()
   return request<DailyPoint[]>(`/admin/summary${query ? `?${query}` : ''}`, options)
+}
+
+export async function getUserBreakdown(
+  userID: string,
+  filters: { groupBy: BreakdownGroup; from: string; to: string },
+  options: APIOptions,
+): Promise<UsageBreakdownRow[]> {
+  const params = new URLSearchParams({ group_by: filters.groupBy })
+  if (filters.from) params.set('from', filters.from)
+  if (filters.to) params.set('to', filters.to)
+
+  return request<UsageBreakdownRow[]>(`/admin/users/${encodeURIComponent(userID)}/breakdown?${params.toString()}`, options)
+}
+
+export async function getUserUsageSummary(
+  userID: string,
+  filters: { provider: ProviderFilter; from: string; to: string },
+  options: APIOptions,
+): Promise<UsageSummaryStats> {
+  const params = new URLSearchParams({ provider: filters.provider })
+  if (filters.from) params.set('from', filters.from)
+  if (filters.to) params.set('to', filters.to)
+
+  return request<UsageSummaryStats>(`/admin/users/${encodeURIComponent(userID)}/summary?${params.toString()}`, options)
 }
 
 async function request<T>(path: string, options: APIOptions, init: RequestInit = {}): Promise<T> {
