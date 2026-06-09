@@ -20,7 +20,7 @@ func TestParseSessionFile(t *testing.T) {
 		t.Fatal("parseSessionFile() returned nil")
 	}
 
-	assertSession(t, session, "claude-sess-001", "myapp", "/home/dev/go/myapp", 7000, 450, 6300)
+	assertSession(t, session, "claude-sess-001", "myapp", "/home/dev/go/myapp", 7000, 450, 3000, 3300)
 	if session.Model != "claude-sonnet-4-5" {
 		t.Errorf("Model = %q, want claude-sonnet-4-5", session.Model)
 	}
@@ -35,8 +35,11 @@ func TestParseSessionFile(t *testing.T) {
 	if event.UserID != "user-123" {
 		t.Errorf("ToUsageEvent().UserID = %q, want user-123", event.UserID)
 	}
-	if event.CacheTokens != 6300 {
-		t.Errorf("ToUsageEvent().CacheTokens = %d, want 6300", event.CacheTokens)
+	if event.CacheCreateTokens != 3000 {
+		t.Errorf("ToUsageEvent().CacheCreateTokens = %d, want 3000", event.CacheCreateTokens)
+	}
+	if event.CacheReadTokens != 3300 {
+		t.Errorf("ToUsageEvent().CacheReadTokens = %d, want 3300", event.CacheReadTokens)
 	}
 }
 
@@ -94,7 +97,7 @@ func TestReadSessionsSinceFilter(t *testing.T) {
 	if len(sessions) != 1 {
 		t.Fatalf("ReadSessions() got %d sessions, want 1", len(sessions))
 	}
-	assertSession(t, &sessions[0], "claude-sess-001", "myapp", "/home/dev/go/myapp", 7000, 450, 6300)
+	assertSession(t, &sessions[0], "claude-sess-001", "myapp", "/home/dev/go/myapp", 7000, 450, 3000, 3300)
 
 	future := time.Now().Add(24 * time.Hour)
 	sessions, err = ReadSessions(dir, future)
@@ -127,7 +130,7 @@ func TestReadSessionsMissingDirectory(t *testing.T) {
 	}
 }
 
-func assertSession(t *testing.T, got *Session, wantID, wantProject, wantCwd string, wantInput, wantOutput, wantCache int64) {
+func assertSession(t *testing.T, got *Session, wantID, wantProject, wantCwd string, wantInput, wantOutput, wantCacheCreate, wantCacheRead int64) {
 	t.Helper()
 
 	if got.ID != wantID {
@@ -148,8 +151,11 @@ func assertSession(t *testing.T, got *Session, wantID, wantProject, wantCwd stri
 	if got.OutputTokens != wantOutput {
 		t.Errorf("OutputTokens = %d, want %d", got.OutputTokens, wantOutput)
 	}
-	if got.CacheTokens != wantCache {
-		t.Errorf("CacheTokens = %d, want %d", got.CacheTokens, wantCache)
+	if got.CacheCreateTokens != wantCacheCreate {
+		t.Errorf("CacheCreateTokens = %d, want %d", got.CacheCreateTokens, wantCacheCreate)
+	}
+	if got.CacheReadTokens != wantCacheRead {
+		t.Errorf("CacheReadTokens = %d, want %d", got.CacheReadTokens, wantCacheRead)
 	}
 }
 

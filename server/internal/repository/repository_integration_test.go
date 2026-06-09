@@ -114,7 +114,7 @@ func integrationEvent(sessionID string) types.UsageEvent {
 		Model:           "gpt-5.5",
 		InputTokens:     1000,
 		OutputTokens:    200,
-		CacheTokens:     50,
+		CacheReadTokens: 50,
 		ReasoningTokens: 25,
 		CostUSD:         0.01,
 		PushedAt:        time.Now().UTC(),

@@ -40,8 +40,8 @@ func TestRunPushDryRunPrintsPreviewWithoutAPIKey(t *testing.T) {
 	assertContains(t, output, "Server URL: http://localhost:8080")
 	assertContains(t, output, "Last push: 2026-06-01T00:00:00Z")
 	assertContains(t, output, "Pending sessions: 2 (1 Claude, 1 Codex)")
-	assertContains(t, output, "claude claude-sess-001 project=myapp date=2026-06-01 model=claude-sonnet-4-5 input=7000 output=450 cache=6300 reasoning=0")
-	assertContains(t, output, "codex last-token-session project=myproject date=2026-06-03 model=gpt-5.5 input=1500 output=300 cache=1200 reasoning=70")
+	assertContains(t, output, "claude claude-sess-001 project=myapp date=2026-06-01 model=claude-sonnet-4-5 input=7000 output=450 cache_create=3000 cache_read=3300 reasoning=0")
+	assertContains(t, output, "codex last-token-session project=myproject date=2026-06-03 model=gpt-5.5 input=1500 output=300 cache_create=0 cache_read=1200 reasoning=70")
 
 	if strings.Contains(output, "ak_secret_value") {
 		t.Fatal("runPush() printed the API key")

@@ -66,12 +66,12 @@ func insertEvent(ctx context.Context, tx *sql.Tx, userID, projectID string, even
 	result, err := tx.ExecContext(ctx, `
 		INSERT INTO usage_events (
 			session_id, user_id, project_id, date, tool, project, cwd, model,
-			input_tokens, output_tokens, cache_tokens, reasoning_tokens, cost_usd, pushed_at
+			input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, reasoning_tokens, cost_usd, pushed_at
 		)
-		VALUES ($1, $2, $3, $4::date, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		VALUES ($1, $2, $3, $4::date, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		ON CONFLICT (session_id) DO NOTHING
 	`, event.SessionID, userID, projectID, event.Date, event.Tool, event.Project, event.Cwd, event.Model,
-		event.InputTokens, event.OutputTokens, event.CacheTokens, event.ReasoningTokens, event.CostUSD, event.PushedAt)
+		event.InputTokens, event.OutputTokens, event.CacheCreateTokens, event.CacheReadTokens, event.ReasoningTokens, event.CostUSD, event.PushedAt)
 	if err != nil {
 		return false, err
 	}

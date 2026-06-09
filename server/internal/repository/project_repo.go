@@ -48,7 +48,7 @@ func (r *ProjectRepo) DailySummary(ctx context.Context, from, to string) ([]type
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
 			date::text,
-			SUM(input_tokens + output_tokens + cache_tokens + reasoning_tokens)::bigint,
+			SUM(input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens + reasoning_tokens)::bigint,
 			SUM(cost_usd)::float8
 		FROM usage_events
 		WHERE date >= $1::date AND date <= $2::date

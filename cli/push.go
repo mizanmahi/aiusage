@@ -110,7 +110,7 @@ func printDryRun(out io.Writer, serverURL string, since time.Time, events []type
 
 	fmt.Fprintln(out, "Sessions:")
 	for _, event := range events {
-		fmt.Fprintf(out, "- %s %s project=%s date=%s model=%s input=%d output=%d cache=%d reasoning=%d\n",
+		fmt.Fprintf(out, "- %s %s project=%s date=%s model=%s input=%d output=%d cache_create=%d cache_read=%d reasoning=%d\n",
 			event.Tool,
 			event.SessionID,
 			event.Project,
@@ -118,7 +118,8 @@ func printDryRun(out io.Writer, serverURL string, since time.Time, events []type
 			event.Model,
 			event.InputTokens,
 			event.OutputTokens,
-			event.CacheTokens,
+			event.CacheCreateTokens,
+			event.CacheReadTokens,
 			event.ReasoningTokens,
 		)
 	}

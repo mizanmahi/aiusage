@@ -152,8 +152,8 @@ func assertSession(t *testing.T, got *Session, wantID, wantProject string, wantI
 	if got.OutputTokens != wantOutput {
 		t.Errorf("OutputTokens = %d, want %d", got.OutputTokens, wantOutput)
 	}
-	if got.CacheTokens != wantCache {
-		t.Errorf("CacheTokens = %d, want %d", got.CacheTokens, wantCache)
+	if got.CacheReadTokens != wantCache {
+		t.Errorf("CacheReadTokens = %d, want %d", got.CacheReadTokens, wantCache)
 	}
 	if got.ReasoningTokens != wantReasoning {
 		t.Errorf("ReasoningTokens = %d, want %d", got.ReasoningTokens, wantReasoning)
