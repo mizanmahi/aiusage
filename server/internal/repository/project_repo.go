@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
+	"github.com/lib/pq"
 	"github.com/mizanmahi/aiusage/types"
 )
 
@@ -73,6 +75,131 @@ func (r *ProjectRepo) DailySummary(ctx context.Context, from, to string) ([]type
 	}
 
 	return points, nil
+}
+
+func (r *ProjectRepo) UserBreakdown(ctx context.Context, userID, groupBy, from, to string) ([]types.UsageBreakdownRow, error) {
+	groupExpr, err := breakdownGroupExpr(groupBy)
+	if err != nil {
+		return nil, err
+	}
+
+	query := fmt.Sprintf(`
+		SELECT *
+		FROM (
+			SELECT
+				%s AS usage_group,
+				'all' AS agent,
+				array_remove(array_agg(DISTINCT model ORDER BY model), '') AS models,
+				SUM(input_tokens)::bigint,
+				SUM(output_tokens)::bigint,
+				SUM(cache_creation_tokens)::bigint,
+				SUM(cache_read_tokens)::bigint,
+				SUM(reasoning_tokens)::bigint,
+				SUM(input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens + reasoning_tokens)::bigint,
+				SUM(cost_usd)::float8,
+				MAX(date)::text
+			FROM usage_events
+			WHERE user_id = $1 AND date >= $2::date AND date <= $3::date
+			GROUP BY usage_group
+			UNION ALL
+			SELECT
+				%s AS usage_group,
+				tool AS agent,
+				array_remove(array_agg(DISTINCT model ORDER BY model), '') AS models,
+				SUM(input_tokens)::bigint,
+				SUM(output_tokens)::bigint,
+				SUM(cache_creation_tokens)::bigint,
+				SUM(cache_read_tokens)::bigint,
+				SUM(reasoning_tokens)::bigint,
+				SUM(input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens + reasoning_tokens)::bigint,
+				SUM(cost_usd)::float8,
+				MAX(date)::text
+			FROM usage_events
+			WHERE user_id = $1 AND date >= $2::date AND date <= $3::date
+			GROUP BY usage_group, tool
+		) rows
+		ORDER BY usage_group ASC, CASE WHEN agent = 'all' THEN 0 ELSE 1 END, agent ASC
+	`, groupExpr, groupExpr)
+
+	rows, err := r.db.QueryContext(ctx, query, userID, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []types.UsageBreakdownRow
+	for rows.Next() {
+		var row types.UsageBreakdownRow
+		if err := rows.Scan(
+			&row.Group,
+			&row.Agent,
+			pq.Array(&row.Models),
+			&row.InputTokens,
+			&row.OutputTokens,
+			&row.CacheCreateTokens,
+			&row.CacheReadTokens,
+			&row.ReasoningTokens,
+			&row.TotalTokens,
+			&row.TotalCost,
+			&row.LastActive,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (r *ProjectRepo) UserUsageSummary(ctx context.Context, userID, provider, from, to string) (*types.UsageSummaryStats, error) {
+	providerFilter := ""
+	args := []any{userID, from, to}
+	if provider != "all" {
+		providerFilter = " AND tool = $4"
+		args = append(args, provider)
+	}
+
+	query := `
+		SELECT
+			COUNT(DISTINCT project)::bigint,
+			COALESCE(SUM(input_tokens), 0)::bigint,
+			COALESCE(SUM(output_tokens), 0)::bigint,
+			COALESCE(SUM(cache_creation_tokens + cache_read_tokens), 0)::bigint,
+			COALESCE(SUM(input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens + reasoning_tokens), 0)::bigint,
+			COALESCE(SUM(cost_usd), 0)::float8
+		FROM usage_events
+		WHERE user_id = $1 AND date >= $2::date AND date <= $3::date` + providerFilter
+
+	var stats types.UsageSummaryStats
+	stats.Provider = provider
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(
+		&stats.TotalProjects,
+		&stats.TotalInput,
+		&stats.TotalOutput,
+		&stats.TotalCached,
+		&stats.TotalTokens,
+		&stats.TotalCost,
+	); err != nil {
+		return nil, err
+	}
+
+	return &stats, nil
+}
+
+func breakdownGroupExpr(groupBy string) (string, error) {
+	switch groupBy {
+	case "day":
+		return "date::text", nil
+	case "month":
+		return "to_char(date, 'YYYY-MM')", nil
+	case "project":
+		return "project", nil
+	default:
+		return "", fmt.Errorf("unsupported breakdown group: %s", groupBy)
+	}
 }
 
 func scanProjectSummaries(rows *sql.Rows) ([]types.ProjectSummary, error) {
