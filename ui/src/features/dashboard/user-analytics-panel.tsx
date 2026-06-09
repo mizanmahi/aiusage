@@ -4,12 +4,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { formatCost, formatDate, formatTokens } from '@/lib/format'
+import { formatCost, formatTokens } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { BreakdownGroup, ProviderFilter, UsageBreakdownRow, UsageSummaryStats, UserSummary } from '@/types'
 import { useUserBreakdownQuery, useUserUsageSummaryQuery } from './queries'
 
-type SortKey = 'group' | 'agent' | 'models' | 'input_tokens' | 'output_tokens' | 'cache_creation_tokens' | 'cache_read_tokens' | 'total_tokens' | 'total_cost_usd' | 'last_active'
+type SortKey = 'group' | 'total_tokens'
 type SortState = { key: SortKey; direction: 'asc' | 'desc' }
 
 const emptyBreakdown: UsageBreakdownRow[] = []
@@ -138,16 +138,19 @@ function BreakdownTab({
         <table className="w-full min-w-[980px] border-collapse text-sm">
           <thead className="bg-muted text-xs text-muted-foreground">
             <tr>
-              <SortableHead label={groupLabel} sortKey="group" sort={sort} setSort={setSort} />
-              <SortableHead label="Agent" sortKey="agent" sort={sort} setSort={setSort} />
-              <SortableHead label="Models" sortKey="models" sort={sort} setSort={setSort} />
-              <SortableHead label="Input" sortKey="input_tokens" sort={sort} setSort={setSort} align="right" />
-              <SortableHead label="Output" sortKey="output_tokens" sort={sort} setSort={setSort} align="right" />
-              <SortableHead label="Cache Create" sortKey="cache_creation_tokens" sort={sort} setSort={setSort} align="right" />
-              <SortableHead label="Cache Read" sortKey="cache_read_tokens" sort={sort} setSort={setSort} align="right" />
+              {groupBy === 'project' ? (
+                <PlainHead label={groupLabel} />
+              ) : (
+                <SortableHead label={groupLabel} sortKey="group" sort={sort} setSort={setSort} />
+              )}
+              <PlainHead label="Agent" />
+              <PlainHead label="Models" />
+              <PlainHead label="Input" align="right" />
+              <PlainHead label="Output" align="right" />
+              <PlainHead label="Cache Create" align="right" />
+              <PlainHead label="Cache Read" align="right" />
               <SortableHead label="Total Tokens" sortKey="total_tokens" sort={sort} setSort={setSort} align="right" />
-              <SortableHead label="Cost (USD)" sortKey="total_cost_usd" sort={sort} setSort={setSort} align="right" />
-              <SortableHead label="Last N Days" sortKey="last_active" sort={sort} setSort={setSort} align="right" />
+              <PlainHead label="Cost (USD)" align="right" />
             </tr>
           </thead>
           <tbody>
@@ -162,12 +165,11 @@ function BreakdownTab({
                 <NumberCell value={row.cache_read_tokens} />
                 <NumberCell value={row.total_tokens} />
                 <td className="px-3 py-2 text-right font-medium text-foreground">{formatCost(row.total_cost_usd)}</td>
-                <td className="px-3 py-2 text-right text-muted-foreground">{lastNDays(row.last_active)}</td>
               </tr>
             ))}
             {!rows.length && (
               <tr>
-                <td className="px-3 py-8 text-center text-muted-foreground" colSpan={10}>
+                <td className="px-3 py-8 text-center text-muted-foreground" colSpan={9}>
                   No usage loaded
                 </td>
               </tr>
@@ -219,6 +221,10 @@ function SortableHead({ label, sortKey, sort, setSort, align = 'left' }: { label
   )
 }
 
+function PlainHead({ label, align = 'left' }: { label: string; align?: 'left' | 'right' }) {
+  return <th className={cn('px-3 py-2 font-semibold', align === 'right' && 'text-right')}>{label}</th>
+}
+
 function NumberCell({ value }: { value: number }) {
   return <td className="px-3 py-2 text-right tabular-nums text-foreground">{formatTokens(value)}</td>
 }
@@ -255,7 +261,6 @@ function sortRows(rows: UsageBreakdownRow[], sort: SortState) {
 }
 
 function sortValue(row: UsageBreakdownRow, key: SortKey) {
-  if (key === 'models') return row.models.join(', ')
   return row[key]
 }
 
@@ -269,14 +274,6 @@ function agentRank(agent: string) {
   if (agent === 'codex') return 1
   if (agent === 'claude') return 2
   return 3
-}
-
-function lastNDays(value: string) {
-  if (!value) return 'Never'
-  const date = new Date(`${value}T00:00:00Z`)
-  if (Number.isNaN(date.getTime())) return formatDate(value)
-  const diff = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000))
-  return diff === 0 ? 'Today' : `${diff}d`
 }
 
 function capitalize(value: string) {
