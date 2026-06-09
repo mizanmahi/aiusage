@@ -35,6 +35,17 @@ func TestParseSessionFile(t *testing.T) {
 			wantUsageEvent: true,
 		},
 		{
+			name:          "reads model from top level turn context",
+			fixture:       "top-level-turn-context.jsonl",
+			wantID:        "top-level-context-session",
+			wantProject:   "topctx",
+			wantInput:     1000,
+			wantOutput:    200,
+			wantCache:     800,
+			wantReasoning: 50,
+			wantModel:     "gpt-5.5",
+		},
+		{
 			name:          "keeps latest cumulative total token usage",
 			fixture:       "total-token-usage.jsonl",
 			wantID:        "total-token-session",

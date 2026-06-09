@@ -18,6 +18,12 @@ type sessionMeta struct {
 	} `json:"payload"`
 }
 
+type turnContext struct {
+	Payload struct {
+		Model string `json:"model"`
+	} `json:"payload"`
+}
+
 type eventMsg struct {
 	Payload struct {
 		Type    string `json:"type"`
@@ -128,6 +134,8 @@ func parseSessionFile(path string) (*Session, error) {
 				continue
 			}
 			metaSeen = true
+		case "turn_context":
+			applyTurnContext(line, &session)
 		case "event_msg":
 			applyTokenCount(line, &session)
 		}
@@ -154,6 +162,18 @@ func applySessionMeta(line []byte, path string, session *Session) error {
 	session.Project = filepath.Base(meta.Payload.Cwd)
 	session.Date = dateFromSessionPath(path)
 	return nil
+}
+
+func applyTurnContext(line []byte, session *Session) {
+	if session.Model != "" {
+		return
+	}
+
+	var context turnContext
+	if err := json.Unmarshal(line, &context); err != nil {
+		return
+	}
+	session.Model = context.Payload.Model
 }
 
 func applyTokenCount(line []byte, session *Session) {
