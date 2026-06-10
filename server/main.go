@@ -89,6 +89,8 @@ func newRouter(
 			r.Use(middleware.Auth(users))
 			r.Get("/users", admin.Users)
 			r.Post("/users", admin.CreateUser)
+			r.Get("/users/{id}/breakdown", admin.UserBreakdown)
+			r.Get("/users/{id}/summary", admin.UserUsageSummary)
 			r.Get("/users/{id}", admin.UserProjects)
 			r.Get("/summary", admin.Summary)
 		})

@@ -24,4 +24,6 @@ type ProjectRepository interface {
 	ListByUser(ctx context.Context, userID string) ([]types.ProjectSummary, error)
 	ListAll(ctx context.Context) ([]types.ProjectSummary, error)
 	DailySummary(ctx context.Context, from, to string) ([]types.DailyPoint, error)
+	UserBreakdown(ctx context.Context, userID, groupBy, provider, from, to string) ([]types.UsageBreakdownRow, error)
+	UserUsageSummary(ctx context.Context, userID, provider, from, to string) (*types.UsageSummaryStats, error)
 }

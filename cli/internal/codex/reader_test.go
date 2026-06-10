@@ -35,6 +35,17 @@ func TestParseSessionFile(t *testing.T) {
 			wantUsageEvent: true,
 		},
 		{
+			name:          "reads model from top level turn context",
+			fixture:       "top-level-turn-context.jsonl",
+			wantID:        "top-level-context-session",
+			wantProject:   "topctx",
+			wantInput:     1000,
+			wantOutput:    200,
+			wantCache:     800,
+			wantReasoning: 50,
+			wantModel:     "gpt-5.5",
+		},
+		{
 			name:          "keeps latest cumulative total token usage",
 			fixture:       "total-token-usage.jsonl",
 			wantID:        "total-token-session",
@@ -152,8 +163,8 @@ func assertSession(t *testing.T, got *Session, wantID, wantProject string, wantI
 	if got.OutputTokens != wantOutput {
 		t.Errorf("OutputTokens = %d, want %d", got.OutputTokens, wantOutput)
 	}
-	if got.CacheTokens != wantCache {
-		t.Errorf("CacheTokens = %d, want %d", got.CacheTokens, wantCache)
+	if got.CacheReadTokens != wantCache {
+		t.Errorf("CacheReadTokens = %d, want %d", got.CacheReadTokens, wantCache)
 	}
 	if got.ReasoningTokens != wantReasoning {
 		t.Errorf("ReasoningTokens = %d, want %d", got.ReasoningTokens, wantReasoning)

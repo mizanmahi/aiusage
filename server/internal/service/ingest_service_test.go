@@ -29,10 +29,11 @@ func TestIngestStoresServerFields(t *testing.T) {
 
 	result, err := service.Ingest(context.Background(), "user-1", types.PushPayload{
 		Events: []types.UsageEvent{{
-			SessionID:    "session-1",
-			Model:        "gpt-5.5",
-			InputTokens:  1_000_000,
-			OutputTokens: 1_000_000,
+			SessionID:       "session-1",
+			Model:           "gpt-5.5",
+			InputTokens:     1_000_000,
+			OutputTokens:    1_000_000,
+			CacheReadTokens: 1_000_000,
 		}},
 	})
 	if err != nil {

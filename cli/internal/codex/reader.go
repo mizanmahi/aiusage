@@ -18,6 +18,12 @@ type sessionMeta struct {
 	} `json:"payload"`
 }
 
+type turnContext struct {
+	Payload struct {
+		Model string `json:"model"`
+	} `json:"payload"`
+}
+
 type eventMsg struct {
 	Payload struct {
 		Type    string `json:"type"`
@@ -50,7 +56,7 @@ type Session struct {
 	Model           string
 	InputTokens     int64
 	OutputTokens    int64
-	CacheTokens     int64
+	CacheReadTokens int64
 	ReasoningTokens int64
 }
 
@@ -128,6 +134,8 @@ func parseSessionFile(path string) (*Session, error) {
 				continue
 			}
 			metaSeen = true
+		case "turn_context":
+			applyTurnContext(line, &session)
 		case "event_msg":
 			applyTokenCount(line, &session)
 		}
@@ -156,6 +164,18 @@ func applySessionMeta(line []byte, path string, session *Session) error {
 	return nil
 }
 
+func applyTurnContext(line []byte, session *Session) {
+	if session.Model != "" {
+		return
+	}
+
+	var context turnContext
+	if err := json.Unmarshal(line, &context); err != nil {
+		return
+	}
+	session.Model = context.Payload.Model
+}
+
 func applyTokenCount(line []byte, session *Session) {
 	var event eventMsg
 	if err := json.Unmarshal(line, &event); err != nil {
@@ -176,7 +196,7 @@ func applyTokenCount(line []byte, session *Session) {
 		// Older/assumed Codex shapes put token fields directly under payload.
 		session.InputTokens += event.Payload.InputTokens
 		session.OutputTokens += event.Payload.OutputTokens
-		session.CacheTokens += event.Payload.CachedTokens
+		session.CacheReadTokens += event.Payload.CachedTokens
 		session.ReasoningTokens += event.Payload.ReasoningTokens
 	}
 
@@ -195,14 +215,14 @@ func hasTokenUsage(usage tokenUsage) bool {
 func addTokenUsage(session *Session, usage tokenUsage) {
 	session.InputTokens += usage.InputTokens
 	session.OutputTokens += usage.OutputTokens
-	session.CacheTokens += usage.CachedInputTokens
+	session.CacheReadTokens += usage.CachedInputTokens
 	session.ReasoningTokens += usage.ReasoningOutputTokens
 }
 
 func setTokenUsage(session *Session, usage tokenUsage) {
 	session.InputTokens = usage.InputTokens
 	session.OutputTokens = usage.OutputTokens
-	session.CacheTokens = usage.CachedInputTokens
+	session.CacheReadTokens = usage.CachedInputTokens
 	session.ReasoningTokens = usage.ReasoningOutputTokens
 }
 
@@ -227,7 +247,7 @@ func (s Session) ToUsageEvent(userID string) types.UsageEvent {
 		Model:           s.Model,
 		InputTokens:     s.InputTokens,
 		OutputTokens:    s.OutputTokens,
-		CacheTokens:     s.CacheTokens,
+		CacheReadTokens: s.CacheReadTokens,
 		ReasoningTokens: s.ReasoningTokens,
 		PushedAt:        time.Now(),
 	}

@@ -16,6 +16,8 @@ type AdminService interface {
 	Users(ctx context.Context, actor *domain.User) ([]types.UserSummary, error)
 	CreateUser(ctx context.Context, actor *domain.User, request types.CreateUserRequest) (*types.CreateUserResponse, error)
 	UserProjects(ctx context.Context, actor *domain.User, userID string) ([]types.ProjectSummary, error)
+	UserBreakdown(ctx context.Context, actor *domain.User, userID, groupBy, provider, from, to string) ([]types.UsageBreakdownRow, error)
+	UserUsageSummary(ctx context.Context, actor *domain.User, userID, provider, from, to string) (*types.UsageSummaryStats, error)
 	Summary(ctx context.Context, actor *domain.User, from, to string) ([]types.DailyPoint, error)
 }
 
@@ -61,6 +63,41 @@ func (h *AdminHandler) UserProjects(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, types.APIResponse[[]types.ProjectSummary]{Data: projects})
+}
+
+func (h *AdminHandler) UserBreakdown(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.service.UserBreakdown(
+		r.Context(),
+		middleware.User(r),
+		chi.URLParam(r, "id"),
+		r.URL.Query().Get("group_by"),
+		r.URL.Query().Get("provider"),
+		r.URL.Query().Get("from"),
+		r.URL.Query().Get("to"),
+	)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, types.APIResponse[[]types.UsageBreakdownRow]{Data: rows})
+}
+
+func (h *AdminHandler) UserUsageSummary(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.service.UserUsageSummary(
+		r.Context(),
+		middleware.User(r),
+		chi.URLParam(r, "id"),
+		r.URL.Query().Get("provider"),
+		r.URL.Query().Get("from"),
+		r.URL.Query().Get("to"),
+	)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, types.APIResponse[*types.UsageSummaryStats]{Data: stats})
 }
 
 func (h *AdminHandler) Summary(w http.ResponseWriter, r *http.Request) {

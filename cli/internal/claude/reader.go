@@ -27,15 +27,16 @@ type assistantLine struct {
 }
 
 type Session struct {
-	ID              string
-	Project         string
-	Cwd             string
-	Date            string
-	Model           string
-	InputTokens     int64
-	OutputTokens    int64
-	CacheTokens     int64
-	ReasoningTokens int64
+	ID                string
+	Project           string
+	Cwd               string
+	Date              string
+	Model             string
+	InputTokens       int64
+	OutputTokens      int64
+	CacheCreateTokens int64
+	CacheReadTokens   int64
+	ReasoningTokens   int64
 }
 
 func ReadSessions(claudeHome string, since time.Time) ([]Session, error) {
@@ -151,8 +152,8 @@ func applyAssistantLine(line assistantLine, session *Session) {
 
 	session.InputTokens += line.Message.Usage.InputTokens
 	session.OutputTokens += line.Message.Usage.OutputTokens
-	// Claude exposes cache writes and reads separately; aiusage stores them together.
-	session.CacheTokens += line.Message.Usage.CacheCreationInputTokens + line.Message.Usage.CacheReadInputTokens
+	session.CacheCreateTokens += line.Message.Usage.CacheCreationInputTokens
+	session.CacheReadTokens += line.Message.Usage.CacheReadInputTokens
 }
 
 func decodePath(encoded string) string {
@@ -176,17 +177,18 @@ func encodedToPath(encoded string) string {
 
 func (s Session) ToUsageEvent(userID string) types.UsageEvent {
 	return types.UsageEvent{
-		SessionID:       s.ID,
-		UserID:          userID,
-		Date:            s.Date,
-		Tool:            types.ToolClaude,
-		Project:         s.Project,
-		Cwd:             s.Cwd,
-		Model:           s.Model,
-		InputTokens:     s.InputTokens,
-		OutputTokens:    s.OutputTokens,
-		CacheTokens:     s.CacheTokens,
-		ReasoningTokens: s.ReasoningTokens,
-		PushedAt:        time.Now(),
+		SessionID:         s.ID,
+		UserID:            userID,
+		Date:              s.Date,
+		Tool:              types.ToolClaude,
+		Project:           s.Project,
+		Cwd:               s.Cwd,
+		Model:             s.Model,
+		InputTokens:       s.InputTokens,
+		OutputTokens:      s.OutputTokens,
+		CacheCreateTokens: s.CacheCreateTokens,
+		CacheReadTokens:   s.CacheReadTokens,
+		ReasoningTokens:   s.ReasoningTokens,
+		PushedAt:          time.Now(),
 	}
 }

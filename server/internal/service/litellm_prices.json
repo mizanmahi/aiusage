@@ -1,0 +1,24 @@
+{
+  "_metadata": {
+    "source": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+    "note": "LiteLLM-shaped embedded pricing subset for aiusage models. Refresh this file from LiteLLM when adding model coverage."
+  },
+  "gpt-5": {
+    "input_cost_per_token": 0.000002,
+    "output_cost_per_token": 0.000008,
+    "cache_creation_input_token_cost": 0.000002,
+    "cache_read_input_token_cost": 0.00000075
+  },
+  "gpt-5.2-codex": {
+    "input_cost_per_token": 0.000002,
+    "output_cost_per_token": 0.000008,
+    "cache_creation_input_token_cost": 0.000002,
+    "cache_read_input_token_cost": 0.000000375
+  },
+  "claude-sonnet-4-5": {
+    "input_cost_per_token": 0.000003,
+    "output_cost_per_token": 0.000015,
+    "cache_creation_input_token_cost": 0.00000375,
+    "cache_read_input_token_cost": 0.0000003
+  }
+}
