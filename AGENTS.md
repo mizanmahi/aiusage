@@ -244,7 +244,7 @@ CLI reads from `~/.aiusage/config.toml` (written by `aiusage init`).
 - Do not add dependencies unless clearly necessary and justified.
 - Never hardcode secrets, API keys, or credentials anywhere.
 - Preserve existing API response shapes unless explicitly asked to change them.
-- A file must not exceed 250 lines (300 for UI files). If it does, split it.
+- A file must not exceed 200 lines (180 for UI files). If it does, split it.
 
 ---
 
