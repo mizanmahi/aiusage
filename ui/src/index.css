@@ -97,3 +97,74 @@ body {
 #root {
   min-height: 100vh;
 }
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.75;
+}
+
+.page-pattern {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.6) 1px, transparent 1px),
+    radial-gradient(circle at center, hsl(var(--primary) / 0.12) 1px, transparent 1.5px);
+  background-position:
+    0 0,
+    0 0,
+    10px 10px;
+  background-size:
+    28px 28px,
+    28px 28px,
+    28px 28px;
+}
+
+.power-shell::before {
+  position: fixed;
+  inset: 0;
+  z-index: -20;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0), transparent 24rem),
+    hsl(var(--background));
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.power-shell.is-powered::before {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.18), transparent 28rem),
+    hsl(var(--background));
+}
+
+.power-core,
+.power-content {
+  transition:
+    filter 400ms ease,
+    opacity 400ms ease,
+    box-shadow 400ms ease;
+}
+
+.power-shell:not(.is-powered) .power-core,
+.power-shell:not(.is-powered) .power-content {
+  filter: saturate(0.65);
+  opacity: 0.72;
+}
+
+.power-shell.is-powered .power-core {
+  box-shadow:
+    0 0 0 1px hsl(var(--primary) / 0.1),
+    0 24px 80px hsl(var(--primary) / 0.12);
+}
+
+.power-dialog {
+  background-image: radial-gradient(circle at 50% 48%, hsl(var(--primary) / 0.08), transparent 20rem);
+}
+
+.power-dialog > section {
+  box-shadow:
+    0 0 0 1px hsl(var(--primary) / 0.12),
+    0 0 40px hsl(var(--primary) / 0.18),
+    0 28px 90px hsl(var(--foreground) / 0.18);
+}

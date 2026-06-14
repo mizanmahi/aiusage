@@ -29,12 +29,12 @@ export function BreakdownTab(props: BreakdownTabProps) {
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <Badge>{isLoading ? 'Loading usage' : `${rows.length} rows`}</Badge>
         <div className={cn('grid gap-2', groupBy === 'month' ? 'sm:grid-cols-[140px_140px]' : 'sm:grid-cols-[140px_140px_1fr_1fr]')}>
-          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground" value={groupBy} onChange={(event) => setGroupBy(event.target.value as BreakdownGroup)}>
+          <select className="h-9 cursor-pointer rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={groupBy} onChange={(event) => setGroupBy(event.target.value as BreakdownGroup)}>
             <option value="day">Days</option>
             <option value="month">Months</option>
             <option value="project">Projects</option>
           </select>
-          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground" value={provider} onChange={(event) => setProvider(event.target.value as ProviderFilter)}>
+          <select className="h-9 cursor-pointer rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={provider} onChange={(event) => setProvider(event.target.value as ProviderFilter)}>
             <option value="all">All tools</option>
             <option value="codex">Codex</option>
             <option value="claude">Claude</option>

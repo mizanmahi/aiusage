@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Clipboard, UserPlus } from 'lucide-react'
+import { Check, Clipboard, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -19,6 +19,8 @@ export function CreateUserPanel({ enabled, isCreating, error, onCreate }: Create
   const [name, setName] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [created, setCreated] = useState<CreateUserResult | null>(null)
+  const [copied, setCopied] = useState(false)
+  const copiedTimer = useRef<number | null>(null)
   const canCreate = enabled && Boolean(email.trim()) && Boolean(name.trim()) && !isCreating
 
   async function submitUser(event: FormEvent<HTMLFormElement>) {
@@ -28,6 +30,14 @@ export function CreateUserPanel({ enabled, isCreating, error, onCreate }: Create
     setEmail('')
     setName('')
     setIsAdmin(false)
+    setCopied(false)
+  }
+
+  async function copyAPIKey(apiKey: string) {
+    await navigator.clipboard.writeText(apiKey)
+    setCopied(true)
+    if (copiedTimer.current) window.clearTimeout(copiedTimer.current)
+    copiedTimer.current = window.setTimeout(() => setCopied(false), 1800)
   }
 
   return (
@@ -57,9 +67,9 @@ export function CreateUserPanel({ enabled, isCreating, error, onCreate }: Create
           <div className="flex flex-col gap-2 rounded-md border border-border bg-muted p-3">
             <p className="text-xs font-medium text-foreground">{created.user.email}</p>
             <code className="block break-all text-xs text-muted-foreground">{created.api_key}</code>
-            <Button className="w-full" type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(created.api_key)}>
-              <Clipboard data-icon="inline-start" />
-              Copy key
+            <Button className="w-full hover:border-primary hover:bg-primary/10" type="button" variant="outline" onClick={() => void copyAPIKey(created.api_key)}>
+              {copied ? <Check data-icon="inline-start" /> : <Clipboard data-icon="inline-start" />}
+              {copied ? 'Copied' : 'Copy key'}
             </Button>
           </div>
         )}
