@@ -26,7 +26,7 @@ export function ThemeToggle() {
             title={option.label}
             aria-label={option.label}
           >
-            <Icon className="size-4" />
+            <Icon data-icon="inline-start" />
           </Button>
         )
       })}
