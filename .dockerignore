@@ -1,0 +1,12 @@
+.git
+.github
+bin
+docs
+ui/node_modules
+ui/dist
+**/.aiusage
+*.db
+*.env
+*.toml.local
+*.jsonl
+!cli/internal/testdata/**/*.jsonl
