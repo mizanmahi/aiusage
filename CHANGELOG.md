@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/mizanmahi/aiusage/compare/v0.4.1...v0.4.2) (2026-06-24)
+
+
+### Bug Fixes
+
+* **cli:** send usage events in batches ([b5d9915](https://github.com/mizanmahi/aiusage/commit/b5d9915ef18c40653a761bc00e0eab6b8f48cdd9))
+
 ## [0.4.1](https://github.com/mizanmahi/aiusage/compare/v0.4.0...v0.4.1) (2026-06-24)
 
 
