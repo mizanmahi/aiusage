@@ -20,7 +20,7 @@ func TestSendBatchesSplitsEventsAndCombinesResults(t *testing.T) {
 		return &types.PushResponse{Accepted: len(batch), Message: "ok"}, nil
 	}
 
-	result, err := sendBatches("http://localhost:8080", "ak_secret_value", events)
+	result, err := sendBatches("http://localhost:8080", "ak_secret_value", events, nil)
 	if err != nil {
 		t.Fatalf("sendBatches() error = %v", err)
 	}
@@ -47,7 +47,7 @@ func TestSendBatchesStopsOnFailure(t *testing.T) {
 		return &types.PushResponse{Accepted: 10}, nil
 	}
 
-	_, err := sendBatches("http://localhost:8080", "ak_secret_value", events)
+	_, err := sendBatches("http://localhost:8080", "ak_secret_value", events, nil)
 	if err == nil || !strings.Contains(err.Error(), "batch 2 of 3: server unavailable") {
 		t.Fatalf("sendBatches() error = %v, want second batch error", err)
 	}

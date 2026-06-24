@@ -56,7 +56,9 @@ func runPush(out, errOut io.Writer, dryRun bool) error {
 		return nil
 	}
 
-	result, err := sendBatches(cfg.ServerURL, cfg.APIKey, events)
+	result, err := sendBatches(cfg.ServerURL, cfg.APIKey, events, func(batch, total, count int) {
+		fmt.Fprintf(out, "Pushing batch %d/%d (%d sessions)...\n", batch, total, count)
+	})
 	if err != nil {
 		return fmt.Errorf("push failed: %w", err)
 	}
@@ -72,13 +74,20 @@ func runPush(out, errOut io.Writer, dryRun bool) error {
 	return nil
 }
 
-func sendBatches(serverURL, apiKey string, events []types.UsageEvent) (*types.PushResponse, error) {
+func sendBatches(
+	serverURL, apiKey string,
+	events []types.UsageEvent,
+	progress func(batch, total, count int),
+) (*types.PushResponse, error) {
 	result := &types.PushResponse{}
 	batchCount := (len(events) + pushBatchSize - 1) / pushBatchSize
 
 	for batch := 0; batch < batchCount; batch++ {
 		start := batch * pushBatchSize
 		end := min(start+pushBatchSize, len(events))
+		if progress != nil {
+			progress(batch+1, batchCount, end-start)
+		}
 		response, err := sendUsageEvents(serverURL, apiKey, cliVersion, events[start:end])
 		if err != nil {
 			return nil, fmt.Errorf("batch %d of %d: %w", batch+1, batchCount, err)
