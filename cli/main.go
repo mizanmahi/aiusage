@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var cliVersion = "dev"
+
 var rootCmd = &cobra.Command{
 	Use:   "aiusage",
 	Short: "Push Claude Code and Codex usage analytics to your server",
@@ -14,6 +16,7 @@ var rootCmd = &cobra.Command{
 }
 
 func main() {
+	rootCmd.Version = cliVersion
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

@@ -18,8 +18,6 @@ var pushDryRun bool
 var sendUsageEvents = pushclient.Send
 var currentTime = time.Now
 
-const cliVersion = ""
-
 var pushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Push pending Claude Code and Codex usage sessions",
