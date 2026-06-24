@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/mizanmahi/aiusage/compare/v0.2.0...v0.3.0) (2026-06-24)
+
+
+### Features
+
+* install goose command in Dockerfile and copy migrations ([ce83305](https://github.com/mizanmahi/aiusage/commit/ce833057a367692ea2aea9cf8960ec9d4b9ca6db))
+
 ## [0.2.0](https://github.com/mizanmahi/aiusage/compare/v0.1.0...v0.2.0) (2026-06-24)
 
 
