@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/mizanmahi/aiusage/compare/v0.4.0...v0.4.1) (2026-06-24)
+
+
+### Bug Fixes
+
+* add docker-compose configuration for PostgreSQL and update HTML title ([7090d36](https://github.com/mizanmahi/aiusage/commit/7090d36806a36c447b7a6448346d03894845d41d))
+
 ## [0.4.0](https://github.com/mizanmahi/aiusage/compare/v0.3.0...v0.4.0) (2026-06-24)
 
 
