@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/mizanmahi/aiusage/compare/v0.3.0...v0.4.0) (2026-06-24)
+
+
+### Features
+
+* add GitHub Actions workflow for CLI publishing and set CLI version ([5548657](https://github.com/mizanmahi/aiusage/commit/554865785190d9b5862aa51972fddf7492e9e774))
+
 ## [0.3.0](https://github.com/mizanmahi/aiusage/compare/v0.2.0...v0.3.0) (2026-06-24)
 
 
