@@ -180,8 +180,8 @@ func TestRunPushDoesNotUpdateStateWhenSendFails(t *testing.T) {
 	if err == nil {
 		t.Fatal("runPush() error = nil, want send error")
 	}
-	if !strings.Contains(err.Error(), "push failed: server unavailable") {
-		t.Fatalf("runPush() error = %q, want wrapped send error", err.Error())
+	if !strings.Contains(err.Error(), "push failed: batch 1 of 1: server unavailable") {
+		t.Fatalf("runPush() error = %q, want wrapped batch error", err.Error())
 	}
 
 	gotState, err := state.Load()

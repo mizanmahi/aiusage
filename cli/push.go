@@ -18,6 +18,8 @@ var pushDryRun bool
 var sendUsageEvents = pushclient.Send
 var currentTime = time.Now
 
+const pushBatchSize = 10
+
 var pushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Push pending Claude Code and Codex usage sessions",
@@ -54,7 +56,7 @@ func runPush(out, errOut io.Writer, dryRun bool) error {
 		return nil
 	}
 
-	result, err := sendUsageEvents(cfg.ServerURL, cfg.APIKey, cliVersion, events)
+	result, err := sendBatches(cfg.ServerURL, cfg.APIKey, events)
 	if err != nil {
 		return fmt.Errorf("push failed: %w", err)
 	}
@@ -68,6 +70,26 @@ func runPush(out, errOut io.Writer, dryRun bool) error {
 		fmt.Fprintln(out, result.Message)
 	}
 	return nil
+}
+
+func sendBatches(serverURL, apiKey string, events []types.UsageEvent) (*types.PushResponse, error) {
+	result := &types.PushResponse{}
+	batchCount := (len(events) + pushBatchSize - 1) / pushBatchSize
+
+	for batch := 0; batch < batchCount; batch++ {
+		start := batch * pushBatchSize
+		end := min(start+pushBatchSize, len(events))
+		response, err := sendUsageEvents(serverURL, apiKey, cliVersion, events[start:end])
+		if err != nil {
+			return nil, fmt.Errorf("batch %d of %d: %w", batch+1, batchCount, err)
+		}
+
+		result.Accepted += response.Accepted
+		result.Skipped += response.Skipped
+		result.Message = response.Message
+	}
+
+	return result, nil
 }
 
 func collectPendingEvents(cfg *config.Config, since time.Time, errOut io.Writer) ([]types.UsageEvent, int, int) {
