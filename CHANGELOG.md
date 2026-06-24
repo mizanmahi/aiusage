@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/mizanmahi/aiusage/compare/v0.4.2...v0.4.3) (2026-06-24)
+
+
+### Bug Fixes
+
+* **cli:** batch usage pushes and report progress ([12697c6](https://github.com/mizanmahi/aiusage/commit/12697c677e0d7bd99fa51f11499e91c0d650ccf3))
+
 ## [0.4.2](https://github.com/mizanmahi/aiusage/compare/v0.4.1...v0.4.2) (2026-06-24)
 
 
